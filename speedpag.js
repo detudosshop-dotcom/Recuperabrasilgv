@@ -10,6 +10,9 @@ const url = require('url');
 const SPEEDPAG_DEFAULT_URL = 'https://api.speedpag.com.br/v1';
 
 function getAuthHeader(publicKey, secretKey) {
+  if (secretKey && (!publicKey || publicKey === 'SUA_PUBLIC_KEY_AQUI' || publicKey === secretKey)) {
+    return 'Basic ' + Buffer.from(`${secretKey}:`).toString('base64');
+  }
   const token = Buffer.from(`${publicKey || ''}:${secretKey || ''}`).toString('base64');
   return `Basic ${token}`;
 }
@@ -31,11 +34,11 @@ function createPixTransaction(params, config) {
     const publicKey = (config && config.public_key) || '';
     const secretKey = (config && config.secret_key) || '';
 
-    if (!publicKey || !secretKey || publicKey === 'SUA_PUBLIC_KEY_AQUI' || secretKey === 'SUA_SECRET_KEY_AQUI') {
+    if (!secretKey || secretKey === 'SUA_SECRET_KEY_AQUI') {
       return resolve({
         success: false,
         waiting_keys: true,
-        message: 'Chaves da SpeedPag não configuradas (defina public_key e secret_key no config.json).'
+        message: 'Chave secret_key da SpeedPag não configurada no config.json.'
       });
     }
 
@@ -164,11 +167,11 @@ function getTransaction(transactionId, config) {
     const publicKey = (config && config.public_key) || '';
     const secretKey = (config && config.secret_key) || '';
 
-    if (!publicKey || !secretKey || publicKey === 'SUA_PUBLIC_KEY_AQUI' || secretKey === 'SUA_SECRET_KEY_AQUI') {
+    if (!secretKey || secretKey === 'SUA_SECRET_KEY_AQUI') {
       return resolve({
         success: false,
         waiting_keys: true,
-        message: 'Chaves da SpeedPag não configuradas.'
+        message: 'Chave da SpeedPag não configurada.'
       });
     }
 

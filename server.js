@@ -364,8 +364,7 @@ const server = http.createServer(async (req, res) => {
 
         if (gateway === 'speedpag') {
           const speedConfig = config.speedpag || {};
-          const isConfigured = speedConfig.public_key && speedConfig.secret_key &&
-            speedConfig.public_key !== 'SUA_PUBLIC_KEY_AQUI' && speedConfig.secret_key !== 'SUA_SECRET_KEY_AQUI';
+          const isConfigured = speedConfig.secret_key && speedConfig.secret_key !== 'SUA_SECRET_KEY_AQUI';
 
           if (!isConfigured) {
             console.log('[SpeedPag] Chaves ainda não configuradas.');
@@ -374,7 +373,7 @@ const server = http.createServer(async (req, res) => {
               success: false,
               waiting_keys: true,
               gateway: 'speedpag',
-              message: 'Chaves da SpeedPag não configuradas. Insira a public_key e secret_key no config.json.'
+              message: 'Chave secret_key da SpeedPag não configurada no config.json.'
             }));
           }
 
@@ -540,13 +539,13 @@ const server = http.createServer(async (req, res) => {
     try {
       const config = getConfig();
       const txDataStore = store.get(txId);
-      const isSpeedPag = (txDataStore && txDataStore.gateway === 'speedpag') || (config.gateway === 'speedpag' && config.speedpag?.public_key !== 'SUA_PUBLIC_KEY_AQUI');
+      const isSpeedPag = (txDataStore && txDataStore.gateway === 'speedpag') || (config.gateway === 'speedpag' && config.speedpag?.secret_key !== 'SUA_SECRET_KEY_AQUI');
 
       let txStatus = '';
       let rawData = {};
       let isApproved = false;
 
-      if (isSpeedPag && config.speedpag?.public_key && config.speedpag?.public_key !== 'SUA_PUBLIC_KEY_AQUI') {
+      if (isSpeedPag && config.speedpag?.secret_key && config.speedpag?.secret_key !== 'SUA_SECRET_KEY_AQUI') {
         const speedResp = await speedpag.getTransaction(txId, config.speedpag);
         rawData = speedResp.data || speedResp;
         txStatus = (speedResp.status || '').toUpperCase();
