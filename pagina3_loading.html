@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Processando Transferência...</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="transffoto/transfcerta.PNG?v=1" as="image">
+  <style>
+    body {
+      background-color: #ffffff;
+      margin: 0;
+      padding: 20px 12px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #1155cc;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      max-width: 480px;
+      width: 100%;
+      min-height: calc(100vh - 40px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 24px;
+      box-sizing: border-box;
+    }
+
+    .spinner {
+      width: 45px;
+      height: 45px;
+      border: 4px solid rgba(17, 85, 204, 0.2);
+      border-top: 4px solid #1155cc;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 17px;
+      font-weight: 700;
+      text-align: center;
+      padding: 0 20px;
+      transition: opacity 0.3s ease;
+    }
+  
+    /* Previne zoom em inputs no iOS */
+    input, select, textarea {
+      font-size: 16px !important;
+      touch-action: manipulation;
+    }
+    </style>
+
+    <style>
+      /* Proteção global para todas as imagens */
+      img {
+        pointer-events: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+      }
+    </style>
+    
+<!-- TikTok Pixel Code Start -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
+var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
+;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+
+    ttq.load('DA835D3C77UES9745010');
+    ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- TikTok Pixel Code End -->
+</head>
+<body>
+
+  <div class="card">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Encontrando dados do recebedor...</div>
+  </div>
+
+  <script>
+    const texts = [
+      "Encontrando dados do recebedor...",
+      "Encontrando instituição...",
+      "Instituição encontrada",
+      "Transferência sendo enviada..."
+    ];
+
+    let currentIndex = 0;
+    const textElement = document.getElementById('loadingText');
+
+    const interval = setInterval(() => {
+      currentIndex++;
+      if (currentIndex < texts.length) {
+        textElement.style.opacity = '0';
+        setTimeout(() => {
+          textElement.textContent = texts[currentIndex];
+          textElement.style.opacity = '1';
+        }, 300);
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          window.location.href = 'pagina3.html' + window.location.search;
+        }, 1500); // Aguarda um pouco antes de redirecionar no último texto
+      }
+    }, 2000);
+  </script>
+
+  <script>
+    // ─── REPASSADOR DE UTMs (ttclid, utm_source, etc.) ──────────────
+    (function() {
+      var urlParams = window.location.search;
+      if (!urlParams) return;
+      function appendParamsToLinks() {
+        var links = document.getElementsByTagName('a');
+        for (var i = 0; i < links.length; i++) {
+          var href = links[i].getAttribute('href');
+          if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) continue;
+          var sep = href.indexOf('?') !== -1 ? '&' : '?';
+          var params = urlParams.startsWith('?') ? urlParams.slice(1) : urlParams;
+          links[i].setAttribute('href', href + sep + params);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', appendParamsToLinks);
+      } else {
+        appendParamsToLinks();
+      }
+    })();
+    // ────────────────────────────────────────────────────────────────
+  </script>
+</body>
+</html>

