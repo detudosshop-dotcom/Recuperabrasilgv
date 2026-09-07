@@ -6,6 +6,7 @@ const url = require('url');
 const store = require('./store');
 const { sendPurchaseEvent, sendInitiateCheckoutEvent, sendViewContentEvent, parseCookie } = require('./tiktok-capi');
 const salesDb = require('./sales_db');
+const speedpag = require('./speedpag');
 
 const PORT = process.env.PORT || 3001;
 const MIME_TYPES = {
@@ -102,6 +103,12 @@ function getConfig() {
     api_provider: 'zapgroup',
     api_url: 'https://api.zapgroup.shop/consultar-filtrada/cpf?cpf={cpf}&token={token}',
     api_token: 'c93601cbe0fce3f5c5b1e3b40c840f500fb162f91103beb42e839b7839813f93',
+    gateway: 'speedpag',
+    speedpag: {
+      public_key: 'SUA_PUBLIC_KEY_AQUI',
+      secret_key: 'SUA_SECRET_KEY_AQUI',
+      api_url: 'https://api.speedpag.com.br/v1'
+    },
     flevopay: {
       secret_key: 'sk_fdc7594e7eb1486ea3e282cc0a8249b55f1e0270b6844a8f506060f75d529968',
       api_url: 'https://app.flevopay.com.br/api/v1/transaction'
@@ -331,14 +338,111 @@ const server = http.createServer(async (req, res) => {
     }));
   }
 
-  // API Route: Criar Transação PIX FlevoPay (com aliases para compatibilidade)
-  if ((pathname === '/api/gerar-pix-flevopay' || pathname === '/api/gerar-pix-freepay' || pathname === '/api/gerar-pix') && req.method === 'POST') {
+  // API Route: Criar Transação PIX (SpeedPag como gateway principal, FlevoPay como fallback)
+  if ((pathname === '/api/gerar-pix-speedpag' || pathname === '/api/gerar-pix-flevopay' || pathname === '/api/gerar-pix-freepay' || pathname === '/api/gerar-pix') && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
         const payload = JSON.parse(body || '{}');
         const config = getConfig();
+        const gateway = (pathname === '/api/gerar-pix-speedpag') ? 'speedpag' : ((pathname === '/api/gerar-pix-flevopay' && config.gateway !== 'speedpag') ? 'flevopay' : (config.gateway || 'speedpag'));
+
+        const cleanCpf = (payload.cpf || '').replace(/\D/g, '') || '00000000000';
+        const cleanName = (payload.name || 'Cliente').trim();
+        const cleanEmail = (payload.email || 'cliente@email.com').trim();
+        const cleanPhone = (payload.phone || '11999999999').replace(/\D/g, '') || '11999999999';
+        const amountCents = payload.amountInCents || 2992; // R$ 29,92
+        const amountReais = (amountCents / 100).toFixed(2);
+        const refId = `REF_${Date.now()}_${cleanCpf.substring(0, 5) || 'USR'}`;
+
+        const clientIp    = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '').split(',')[0].trim();
+        const userAgent   = req.headers['user-agent'] || '';
+        const cookieStr   = req.headers.cookie || '';
+        const ttclid      = payload.ttclid || parseCookie(cookieStr, '_ttclid') || '';
+        const ttp         = payload.ttp    || parseCookie(cookieStr, '_ttp')    || '';
+
+        if (gateway === 'speedpag') {
+          const speedConfig = config.speedpag || {};
+          const isConfigured = speedConfig.public_key && speedConfig.secret_key &&
+            speedConfig.public_key !== 'SUA_PUBLIC_KEY_AQUI' && speedConfig.secret_key !== 'SUA_SECRET_KEY_AQUI';
+
+          if (!isConfigured) {
+            console.log('[SpeedPag] Chaves ainda não configuradas.');
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({
+              success: false,
+              waiting_keys: true,
+              gateway: 'speedpag',
+              message: 'Chaves da SpeedPag não configuradas. Insira a public_key e secret_key no config.json.'
+            }));
+          }
+
+          const postbackUrl = payload.postbackUrl || (req.headers.host ? `https://${req.headers.host}/api/webhook-speedpag` : undefined);
+          const speedRes = await speedpag.createPixTransaction({
+            amountInCents: amountCents,
+            title: payload.description || 'Taxa de Liberação do Valor',
+            customer: {
+              name: cleanName,
+              email: cleanEmail,
+              phone: cleanPhone,
+              cpf: cleanCpf
+            },
+            postbackUrl: postbackUrl,
+            externalRef: refId,
+            metadata: {
+              refId,
+              utm_source: payload.utm_source || '',
+              utm_campaign: payload.utm_campaign || '',
+              utm_medium: payload.utm_medium || '',
+              utm_content: payload.utm_content || '',
+              utm_term: payload.utm_term || '',
+              src: payload.src || '',
+              sck: payload.sck || '',
+              ttclid: ttclid,
+              ttp: ttp
+            }
+          }, speedConfig);
+
+          if (speedRes.success) {
+            const txId = speedRes.transaction_id || refId;
+            const qrCodeText = speedRes.qr_code_text;
+            const qrCodeImage = speedRes.qr_code_image;
+
+            store.set(txId, {
+              gateway: 'speedpag',
+              ttclid, ttp, amount: amountReais,
+              email: cleanEmail, phone: cleanPhone, doc: cleanCpf,
+              ip: clientIp, userAgent, capiSent: false
+            });
+
+            sendInitiateCheckoutEvent({
+              email: cleanEmail, phone: cleanPhone, doc: cleanCpf,
+              amount: amountReais, txId, ttclid, ttp, ip: clientIp, userAgent
+            }).catch(e => console.error('[CAPI] InitiateCheckout error:', e.message));
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({
+              success: true,
+              gateway: 'speedpag',
+              transaction_id: txId,
+              reference: refId,
+              status: speedRes.status || 'waiting_payment',
+              qr_code_image: qrCodeImage,
+              qr_code_text: qrCodeText,
+              amount: parseFloat(amountReais)
+            }));
+          } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({
+              success: false,
+              gateway: 'speedpag',
+              error: speedRes.error || 'Erro ao gerar PIX na SpeedPag'
+            }));
+          }
+        }
+
+        // Gateway Fallback: FlevoPay
         const flevoConfig = config.flevopay || {};
         const secretKey = flevoConfig.secret_key || 'sk_fdc7594e7eb1486ea3e282cc0a8249b55f1e0270b6844a8f506060f75d529968';
 
@@ -350,14 +454,6 @@ const server = http.createServer(async (req, res) => {
             message: 'Secret Key da FlevoPay não configurada.'
           }));
         }
-
-        const cleanCpf = (payload.cpf || '').replace(/\D/g, '') || '00000000000';
-        const cleanName = (payload.name || 'Cliente').trim();
-        const cleanEmail = (payload.email || 'cliente@email.com').trim();
-        const cleanPhone = (payload.phone || '11999999999').replace(/\D/g, '') || '11999999999';
-        const amountCents = payload.amountInCents || 2992; // R$ 29,92
-        const amountReais = (amountCents / 100).toFixed(2);
-        const refId = `REF_${Date.now()}_${cleanCpf.substring(0, 5) || 'USR'}`;
 
         const requestBody = {
           amount: amountCents,
@@ -391,14 +487,9 @@ const server = http.createServer(async (req, res) => {
           const qrCodeText = resData.qr_code || '';
           const qrCodeImage = resData.qr_code_base64 || (qrCodeText ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrCodeText)}` : '');
 
-          const clientIp    = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '').split(',')[0].trim();
-          const userAgent   = req.headers['user-agent'] || '';
-          const cookieStr   = req.headers.cookie || '';
-          const ttclid      = payload.ttclid || parseCookie(cookieStr, '_ttclid') || '';
-          const ttp         = payload.ttp    || parseCookie(cookieStr, '_ttp')    || '';
-
           // Salva dados no store para uso pelo check-status e webhook
           store.set(txId, {
+            gateway: 'flevopay',
             ttclid, ttp, amount: amountReais,
             email: cleanEmail, phone: cleanPhone, doc: cleanCpf,
             ip: clientIp, userAgent, capiSent: false
@@ -413,6 +504,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           return res.end(JSON.stringify({
             success: true,
+            gateway: 'flevopay',
             transaction_id: txId,
             reference: refId,
             status: resData.status || 'pending',
@@ -424,11 +516,12 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           return res.end(JSON.stringify({
             success: false,
+            gateway: 'flevopay',
             error: apiResponse.data?.message || apiResponse.data || 'Erro ao gerar PIX na FlevoPay'
           }));
         }
       } catch (err) {
-        console.error('[FlevoPay] Erro interno:', err.message);
+        console.error('[Pagamento] Erro interno:', err.message);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: err.message }));
       }
@@ -436,7 +529,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API Route: Verificar status do pagamento FlevoPay + disparar CompletePayment CAPI
+  // API Route: Verificar status do pagamento (SpeedPag ou FlevoPay) + disparar CompletePayment CAPI
   if (pathname === '/api/check-status' && req.method === 'GET') {
     const txId = parsedUrl.query.id || '';
     if (!txId) {
@@ -446,49 +539,65 @@ const server = http.createServer(async (req, res) => {
 
     try {
       const config = getConfig();
-      const flevoConfig = config.flevopay || {};
-      const secretKey = flevoConfig.secret_key || 'sk_fdc7594e7eb1486ea3e282cc0a8249b55f1e0270b6844a8f506060f75d529968';
+      const txDataStore = store.get(txId);
+      const isSpeedPag = (txDataStore && txDataStore.gateway === 'speedpag') || (config.gateway === 'speedpag' && config.speedpag?.public_key !== 'SUA_PUBLIC_KEY_AQUI');
 
-      const checkResp = await new Promise((resolve, reject) => {
-        const options = {
-          hostname: 'app.flevopay.com.br',
-          port: 443,
-          path: `/api/v1/query?action=get_transaction&id=${encodeURIComponent(txId)}`,
-          method: 'GET',
-          headers: {
-            'X-API-Key': secretKey,
-            'Content-Type': 'application/json'
-          },
-          timeout: 8000
-        };
-        const r = https.request(options, (resp) => {
-          let body = '';
-          resp.on('data', c => body += c);
-          resp.on('end', () => {
-            try { resolve(JSON.parse(body)); } catch(e) { resolve({ raw: body }); }
+      let txStatus = '';
+      let rawData = {};
+      let isApproved = false;
+
+      if (isSpeedPag && config.speedpag?.public_key && config.speedpag?.public_key !== 'SUA_PUBLIC_KEY_AQUI') {
+        const speedResp = await speedpag.getTransaction(txId, config.speedpag);
+        rawData = speedResp.data || speedResp;
+        txStatus = (speedResp.status || '').toUpperCase();
+        isApproved = speedResp.isPaid || txStatus === 'PAID' || txStatus === 'APPROVED';
+        console.log(`[check-status SpeedPag] tx: ${txId} | status: ${txStatus}`);
+      } else {
+        const flevoConfig = config.flevopay || {};
+        const secretKey = flevoConfig.secret_key || 'sk_fdc7594e7eb1486ea3e282cc0a8249b55f1e0270b6844a8f506060f75d529968';
+
+        const checkResp = await new Promise((resolve, reject) => {
+          const options = {
+            hostname: 'app.flevopay.com.br',
+            port: 443,
+            path: `/api/v1/query?action=get_transaction&id=${encodeURIComponent(txId)}`,
+            method: 'GET',
+            headers: {
+              'X-API-Key': secretKey,
+              'Content-Type': 'application/json'
+            },
+            timeout: 8000
+          };
+          const r = https.request(options, (resp) => {
+            let body = '';
+            resp.on('data', c => body += c);
+            resp.on('end', () => {
+              try { resolve(JSON.parse(body)); } catch(e) { resolve({ raw: body }); }
+            });
           });
+          r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
+          r.on('error', reject);
+          r.end();
         });
-        r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
-        r.on('error', reject);
-        r.end();
-      });
 
-      const rawData  = checkResp || {};
-      const txStatus = (rawData.status || '').toUpperCase();
+        rawData = checkResp || {};
+        txStatus = (rawData.status || '').toUpperCase();
+        isApproved = txStatus === 'APPROVED' || txStatus === 'PAID';
+        console.log(`[check-status FlevoPay] tx: ${txId} | status: ${txStatus}`);
+      }
 
-      console.log(`[check-status] tx: ${txId} | status: ${txStatus}`);
-
-      if (txStatus === 'APPROVED' || txStatus === 'PAID') {
+      if (isApproved) {
         // Dispara CompletePayment uma única vez (anti-duplicidade)
         let txData = store.get(txId);
         if (!txData) {
-          const fallbackAmount = rawData.amount ? parseFloat(rawData.amount) / 100 : 29.92;
+          const fallbackAmount = rawData.amount ? (rawData.amount > 500 ? parseFloat(rawData.amount) / 100 : parseFloat(rawData.amount)) : 29.92;
           txData = {
+            gateway: isSpeedPag ? 'speedpag' : 'flevopay',
             capiSent: false, amount: fallbackAmount,
-            email: rawData.customer_data?.customer?.email || rawData.customer?.email || '',
-            phone: rawData.customer_data?.customer?.phone || rawData.customer?.phone || '',
-            doc:   rawData.customer_data?.customer?.document || rawData.customer?.document || '',
-            ip: '', userAgent: '', ttclid: ''
+            email: rawData.customer?.email || rawData.customer_data?.customer?.email || '',
+            phone: rawData.customer?.phone || rawData.customer_data?.customer?.phone || '',
+            doc:   rawData.customer?.document?.number || rawData.customer?.document || '',
+            ip: '', userAgent: '', ttclid: '', ttp: ''
           };
         }
         if (!txData.capiSent) {
@@ -513,7 +622,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ status: txStatus.toLowerCase(), raw: rawData }));
+      return res.end(JSON.stringify({ status: txStatus.toLowerCase(), isPaid: isApproved, raw: rawData }));
     } catch (err) {
       console.error('[check-status] Erro:', err.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -521,15 +630,68 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // API Route: Webhook FlevoPay — disparo garantido de CompletePayment
-  if ((pathname === '/api/webhook-flevopay' || pathname === '/api/webhook-freepay' || pathname === '/api/webhook') && req.method === 'POST') {
+  // API Route: Webhook SpeedPag e FlevoPay — disparo garantido de CompletePayment
+  if ((pathname === '/api/webhook-speedpag' || pathname === '/api/webhook-flevopay' || pathname === '/api/webhook-freepay' || pathname === '/api/webhook') && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
-        const data  = JSON.parse(body || '{}');
+        const data = JSON.parse(body || '{}');
+        const config = getConfig();
+
+        // SpeedPag Envelope: { type, url, objectId, data }
+        if (pathname === '/api/webhook-speedpag' || data.objectId || (data.data && data.data.paymentMethod)) {
+          const inner = data.data || data;
+          const txId = String(inner.id || data.objectId || '');
+          const status = (inner.status || '').toUpperCase();
+          console.log(`[Webhook SpeedPag] tx: ${txId} | status: ${status}`);
+
+          if (!txId) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ error: 'Missing transaction ID' }));
+          }
+
+          if (status === 'PAID' || status === 'APPROVED') {
+            let txData = store.get(txId);
+            if (!txData) {
+              const rawAmount = inner.amount ? (inner.amount > 500 ? parseFloat(inner.amount) / 100 : parseFloat(inner.amount)) : 29.92;
+              txData = {
+                gateway: 'speedpag',
+                capiSent: false,
+                amount: rawAmount,
+                email: inner.customer?.email || '',
+                phone: inner.customer?.phone || '',
+                doc: inner.customer?.document?.number || inner.customer?.document || '',
+                ip: inner.ip || '', userAgent: '', ttclid: '', ttp: ''
+              };
+            }
+            if (!txData.capiSent) {
+              store.set(txId, { ...txData, capiSent: true });
+
+              salesDb.saveSale(txId, { ...txData, source: 'webhook-speedpag' }, 'pending', null);
+
+              sendPurchaseEvent({
+                email: txData.email, phone: txData.phone, doc: txData.doc,
+                amount: txData.amount, txId,
+                ttclid: txData.ttclid, ttp: txData.ttp || '', ip: txData.ip, userAgent: txData.userAgent
+              }).then(capiRes => {
+                const ok = capiRes && capiRes.code === 0;
+                salesDb.updateCapiStatus(txId, ok ? 'sent' : 'error', capiRes);
+                console.log(`[SalesDB] SpeedPag Webhook CAPI ${ok ? '✅ sent' : '❌ error'} | tx: ${txId}`);
+              }).catch(e => {
+                salesDb.updateCapiStatus(txId, 'error', { error: e.message });
+                console.error('[SpeedPag Webhook CAPI] error:', e.message);
+              });
+            }
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ received: true, gateway: 'speedpag' }));
+        }
+
+        // FlevoPay Envelope
         const inner = data.data || data;
-        const txId  = inner.transaction_id || inner.id || inner.external_id || '';
+        const txId = inner.transaction_id || inner.id || inner.external_id || '';
         const status = (inner.status || '').toUpperCase();
 
         console.log(`[Webhook FlevoPay] tx: ${txId} | status: ${status}`);
@@ -544,19 +706,19 @@ const server = http.createServer(async (req, res) => {
           if (!txData) {
             const rawAmount = inner.amount ? (inner.amount > 500 ? parseFloat(inner.amount) / 100 : parseFloat(inner.amount)) : 29.92;
             txData = {
+              gateway: 'flevopay',
               capiSent: false,
-              amount:    rawAmount,
-              email:     inner.customer?.email || '',
-              phone:     inner.customer?.phone || '',
-              doc:       inner.customer?.document || '',
+              amount: rawAmount,
+              email: inner.customer?.email || '',
+              phone: inner.customer?.phone || '',
+              doc: inner.customer?.document || '',
               ip: '', userAgent: '', ttclid: '', ttp: ''
             };
           }
           if (!txData.capiSent) {
             store.set(txId, { ...txData, capiSent: true });
 
-            // Salva venda no banco (status pending antes de disparar)
-            salesDb.saveSale(txId, { ...txData, source: 'webhook' }, 'pending', null);
+            salesDb.saveSale(txId, { ...txData, source: 'webhook-flevopay' }, 'pending', null);
 
             sendPurchaseEvent({
               email: txData.email, phone: txData.phone, doc: txData.doc,
@@ -565,16 +727,16 @@ const server = http.createServer(async (req, res) => {
             }).then(capiRes => {
               const ok = capiRes && capiRes.code === 0;
               salesDb.updateCapiStatus(txId, ok ? 'sent' : 'error', capiRes);
-              console.log(`[SalesDB] Webhook CAPI ${ok ? '✅ sent' : '❌ error'} | tx: ${txId}`);
+              console.log(`[SalesDB] FlevoPay Webhook CAPI ${ok ? '✅ sent' : '❌ error'} | tx: ${txId}`);
             }).catch(e => {
               salesDb.updateCapiStatus(txId, 'error', { error: e.message });
-              console.error('[Webhook CAPI] error:', e.message);
+              console.error('[FlevoPay Webhook CAPI] error:', e.message);
             });
           }
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ received: true }));
+        return res.end(JSON.stringify({ received: true, gateway: 'flevopay' }));
       } catch (err) {
         console.error('[Webhook] Error:', err);
         res.writeHead(500, { 'Content-Type': 'application/json' });
