@@ -4,7 +4,7 @@
   "api_token": "c93601cbe0fce3f5c5b1e3b40c840f500fb162f91103beb42e839b7839813f93",
   "gateway": "speedpag",
   "speedpag": {
-    "public_key": "",
+    "public_key": "pk_xD4JcLeU5cucVIXDNhSqrvjpgQZT-N4csyGtVBvEtT-6twjn",
     "secret_key": "sk_FQTBtKJas_JAw1E2e2AZzCt3yGyV7IfblcSrnZHRCZmXruQb",
     "api_url": "https://api.speedpag.com.br/v1"
   },
