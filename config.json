@@ -9,7 +9,7 @@
     "api_url": "https://api.speedpag.com.br/v1"
   },
   "flevopay": {
-    "secret_key": "sk_fdc7594e7eb1486ea3e282cc0a8249b55f1e0270b6844a8f506060f75d529968",
+    "secret_key": "flevopay_sk_4d2f2349cd060b2eb9d2346923037759f1c3b617645417359fc96c8a80ea2429",
     "api_url": "https://app.flevopay.com.br/api/v1/transaction"
   }
 }
