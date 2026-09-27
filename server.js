@@ -454,10 +454,13 @@ const server = http.createServer(async (req, res) => {
           }));
         }
 
+        const flevoPostbackUrl = payload.postbackUrl || (req.headers.host ? `https://${req.headers.host}/api/webhook-flevopay` : undefined);
+
         const requestBody = {
           amount: amountCents,
           description: payload.description || 'Taxa de Registro e Regularização Cadastral',
           reference: refId,
+          postback_url: flevoPostbackUrl,
           source: 'api_externa',
           customer: {
             name: cleanName,
